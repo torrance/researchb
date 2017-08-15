@@ -1,0 +1,5 @@
+for file in `find . -name *.fits`; do echo $file; ../../Code/blanker.py "$file"; done
+
+pwdd="`pwd`"; for file in `find ${pwdd} -name *.blanked.fits`; do echo "$file"; dirr=`dirname "$file"`; echo "$dirr"; cd "$dirr"; BANE "$file"; aegean --cores 1 --autoload --seedclip 5 --floodclip 2.5 --table sources.ann,sources.csv --out sources.aegean "$file"; done
+
+find . -name sources_comp.csv -print0 | xargs -0 ../../Code/crossmatcher.py

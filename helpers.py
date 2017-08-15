@@ -10,8 +10,8 @@ def draw_ellipse(image, x, y, major, minor, pa):
 
     # Add a half pixel to each of the major and minor axes
     # to cater to pixels being discrete in size
-    major += 0.5
-    minor += 0.5
+    #major += 0.5
+    #minor += 0.5
 
     # Perform translation and rotation first
     Xdash = (X-x) * np.cos(np.radians(pa)) + (Y-y) * np.sin(np.radians(pa))
@@ -60,6 +60,9 @@ def draw_gaussian(data, x, y, sx, sy, pa, peak):
     ymin = int(min(max(0, y - gaussian_limit), ysize))
     ymax = int(min(max(0, y + gaussian_limit), ysize))
 
+    if xmin == xmax or ymin == ymax:
+        return
+
     Y, X = np.mgrid[ymin:ymax, xmin:xmax]
     X = X.ravel()
     Y = Y.ravel()
@@ -69,8 +72,6 @@ def draw_gaussian(data, x, y, sx, sy, pa, peak):
                                 sy, pa)
 
     # Blanking
-    model[model > 0.0001] = np.nan
-    model[~np.isnan(model)] = 0
     model = model.reshape((ymax-ymin, xmax-xmin))
     data[ymin:ymax, xmin:xmax] += model
 
@@ -90,6 +91,27 @@ def translate(ra, dec, r, theta):
     x = np.cos(np.radians(r)) - np.sin(np.radians(dec)) * np.sin(np.radians(dec_out))
     ra_out = ra + np.degrees(np.arctan2(y, x))
     return ra_out, dec_out
+
+
+# The following functions are explained
+# at http://www.movable-type.co.uk/scripts/latlong.html
+# phi ~ lat ~ Dec
+# lambda ~ lon ~ RA
+def gcd(ra1, dec1, ra2, dec2):
+    """
+    Great circle distance as calculated by the haversine formula
+    ra/dec in degrees
+    returns:
+    sep in degrees
+    """
+    # TODO:  Vincenty formula
+    # see - https://en.wikipedia.org/wiki/Great-circle_distance
+    dlon = ra2 - ra1
+    dlat = dec2 - dec1
+    a = np.sin(np.radians(dlat) / 2) ** 2
+    a += np.cos(np.radians(dec1)) * np.cos(np.radians(dec2)) * np.sin(np.radians(dlon) / 2) ** 2
+    sep = np.degrees(2 * np.arcsin(min(1, np.sqrt(a))))
+    return sep
 
 
 class WCSHelper:

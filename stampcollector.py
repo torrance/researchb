@@ -28,7 +28,7 @@ for i, row in enumerate(reader):
         '_charset_': 'UTF-8',
         '__nevow_form__': 'genForm',
         'pos': "{}, {};".format(ra, dec),
-        'freq': ['072-103', '103-134', '139-170', '170-231'],
+        #'freq': ['072-103', '103-134', '139-170', '170-231'],
         'size': '1.5',
         'proj_opt': 'ZEA',
         '_DBOPTIONS_ORDER': 'freq',
@@ -38,8 +38,19 @@ for i, row in enumerate(reader):
         'submit': 'Go',
     })
 
-    for freq, url in r.json()['data']:
-        print(freq, url)
+    try:
+        images = r.json()['data']
+    except Exception as e:
+        print("Failed to parse json {}".format(str(e)))
+        continue
+
+    for freq, url in images:
+        folder = "{}/{}/{}".format(FOLDER, island, freq)
+        p = pathlib.Path(folder)
+        if p.exists():
+            continue
+
+        print("Downloading to {}".format(folder))
         r = requests.get(url)
 
         # Get filename
@@ -52,15 +63,9 @@ for i, row in enumerate(reader):
         if filename is None:
             filename = url
 
-        folder = "{}/{}/{}".format(FOLDER, island, freq)
-        print("Downloading to {}".format(folder))
-
-        p = pathlib.Path(folder)
         p.mkdir(exist_ok=True, parents=True)
 
         p = pathlib.Path("{}/{}".format(folder, filename))
         f = p.open(mode='wb')
         f.write(r.content)
-
-    if i == 4:
-        break
+        f.close()
